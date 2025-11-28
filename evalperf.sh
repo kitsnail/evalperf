@@ -77,27 +77,51 @@ ${GREEN}常用命令${NC}:
   evalperf.sh -p 64 -n 200      单次完整测试
 
 ${GREEN}参数说明${NC}:
-  ${GREEN}-p <num>${NC}  并发数 (默认: 64)
-  ${GREEN}-n <num>${NC}  请求数 (默认: 200)
-  ${GREEN}-d <path>${NC}  数据集路径 (默认: ./prompts/p_short.jsonl)
-  ${GREEN}-o <dir>${NC}  输出目录 (默认: ./results)
-  ${GREEN}-m <name>${NC}  模型名称 (默认: Qwen3-VL-235B-A22B-Instruct)
-  ${GREEN}--quick${NC}    快速验证模式 (32并发, 50请求)
-  ${GREEN}-h, --help${NC} 显示帮助信息
+  ${GREEN}-p <num>${NC}    并发数 (默认: 64, 环境变量: PARALLEL)
+  ${GREEN}-n <num>${NC}    请求数 (默认: 200, 环境变量: REQUESTS)
+  ${GREEN}-d <path>${NC}   数据集路径 (默认: ./prompts/p_short.jsonl, 环境变量: DATASET)
+  ${GREEN}-o <dir>${NC}    输出目录 (默认: ./results, 环境变量: OUTPUT_DIR)
+  ${GREEN}-m <name>${NC}   模型名称 (默认: Qwen3-VL-235B-A22B-Instruct, 环境变量: MODEL)
+  ${GREEN}-u <url>${NC}    服务URL (默认: http://100.125.1.153/v1/chat/completions, 环境变量: URL)
+  ${GREEN}-t <num>${NC}    最大令牌数 (默认: 200, 环境变量: MAX_TOKENS)
+  ${GREEN}--quick${NC}      快速验证模式 (32并发, 50请求)
+  ${GREEN}-h, --help${NC}   显示帮助信息
 
 ${GREEN}示例${NC}:
-  evalperf.sh                    # 使用默认设置快速验证
-  evalperf.sh --quick             # 快速验证模式
-  evalperf.sh -p 128 -n 100      # 128并发，100请求
-  evalperf.sh -p 64 -n 200 -d custom.jsonl  # 自定义数据集
+  evalperf.sh                              # 使用默认设置快速验证
+  evalperf.sh --quick                       # 快速验证模式
+  evalperf.sh -p 128 -n 100                # 128并发，100请求
+  evalperf.sh -p 64 -n 200 -d custom.jsonl # 自定义数据集
+  evalperf.sh -m "gpt-4" -u "http://localhost:8000/v1/chat/completions" -t 512 # 自定义模型和URL
+  PARALLEL=32 REQUESTS=100 evalperf.sh       # 通过环境变量设置默认值
 EOF
 }
 
 validate_params() {
-    (( PARALLEL < 1 || PARALLEL > 256 )) && { error "并发数必须在 1-256 之间，当前: $PARALLEL"; exit 1; }
-    (( REQUESTS < 10 )) && { error "请求数至少为 10，当前: $REQUESTS"; exit 1; }
-    [[ ! -f "$DATASET" ]] && { error "数据集不存在: $DATASET"; exit 1; }
-    [[ ! -s "$DATASET" ]] && { error "数据集文件为空: $DATASET"; exit 1; }
+    if (( PARALLEL < 1 || PARALLEL > 256 )); then
+        error "并发数必须在 1-256 之间，当前: $PARALLEL"
+        exit 1
+    fi
+    if (( REQUESTS < 10 )); then
+        error "请求数至少为 10，当前: $REQUESTS"
+        exit 1
+    fi
+    if (( MAX_TOKENS < 1 || MAX_TOKENS > 8192 )); then
+        error "最大令牌数必须在 1-8192 之间，当前: $MAX_TOKENS"
+        exit 1
+    fi
+    if [[ ! -f "$DATASET" ]]; then
+        error "数据集不存在: $DATASET"
+        exit 1
+    fi
+    if [[ ! -s "$DATASET" ]]; then
+        error "数据集文件为空: $DATASET"
+        exit 1
+    fi
+    if [[ ! "$URL" =~ ^https?:// ]]; then
+        error "URL格式不正确，必须以http://或https://开头: $URL"
+        exit 1
+    fi
 }
 
 extract_metrics() {
@@ -198,6 +222,12 @@ main() {
             -m) 
                 [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }
                 MODEL="$2"; shift 2 ;;
+            -u) 
+                [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }
+                URL="$2"; shift 2 ;;
+            -t) 
+                [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }
+                MAX_TOKENS="$2"; shift 2 ;;
             --quick) mode="quick"; shift ;;
             -h|--help) usage; exit 0 ;;
             *) error "未知参数: $1"; usage; exit 1 ;;
