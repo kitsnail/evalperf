@@ -1,5 +1,5 @@
 {"messages": [{"role": "user", "content": "Hello, how are you?"}]}
-{"messages": [{"role": "user", "content": "What is the weather today?"}]}
+{"messages": [{"role": "user", "content": "What is weather today?"}]}
 {"messages": [{"role": "user", "content": "Can you help me with math?"}]}
 {"messages": [{"role": "user", "content": "Tell me a joke."}]}
 {"messages": [{"role": "user", "content": "How do I cook rice?"}]}
@@ -8,3 +8,93 @@
 {"messages": [{"role": "user", "content": "Best programming language?"}]}
 {"messages": [{"role": "user", "content": "How to learn coding?"}]}
 {"messages": [{"role": "user", "content": "What is Python?"}]}
+{"messages": [{"role": "user", "content": "How do I learn JavaScript?"}]}
+{"messages": [{"role": "user", "content": "What is machine learning?"}]}
+{"messages": [{"role": "user", "content": "Explain neural networks."}]}
+{"messages": [{"role": "user", "content": "How to build a website?"}]}
+{"messages": [{"role": "user", "content": "What is cloud computing?"}]}
+{"messages": [{"role": "user", "content": "How to learn data science?"}]}
+{"messages": [{"role": "user", "content": "What is blockchain?"}]}
+{"messages": [{"role": "user", "content": "Explain quantum computing."}]}
+{"messages": [{"role": "user", "content": "How to improve programming skills?"}]}
+{"messages": [{"role": "user", "content": "What is cybersecurity?"}]}
+{"messages": [{"role": "user", "content": "How do I learn SQL?"}]}
+{"messages": [{"role": "user", "content": "What is artificial intelligence?"}]}
+{"messages": [{"role": "user", "content": "Explain deep learning."}]}
+{"messages": [{"role": "user", "content": "How to start programming?"}]}
+{"messages": [{"role": "user", "content": "What is natural language processing?"}]}
+{"messages": [{"role": "user", "content": "How to debug code effectively?"}]}
+{"messages": [{"role": "user", "content": "What is data mining?"}]}
+{"messages": [{"role": "user", "content": "Explain computer vision."}]}
+{"messages": [{"role": "user", "content": "How to become a software engineer?"}]}
+{"messages": [{"role": "user", "content": "What is algorithm?"}]}
+{"messages": [{"role": "user", "content": "How to optimize code performance?"}]}
+{"messages": [{"role": "user", "content": "What is big data?"}]}
+{"messages": [{"role": "user", "content": "Explain software testing."}]}
+{"messages": [{"role": "user", "content": "How to learn Docker?"}]}
+{"messages": [{"role": "user", "content": "What is DevOps?"}]}
+{"messages": [{"role": "user", "content": "How to version control with Git?"}]}
+{"messages": [{"role": "user", "content": "What is microservices architecture?"}]}
+{"messages": [{"role": "user", "content": "Explain cloud deployment."}]}
+{"messages": [{"role": "user", "content": "How to write clean code?"}]}
+{"messages": [{"role": "user", "content": "What is REST API?"}]}
+{"messages": [{"role": "user", "content": "How to learn Kubernetes?"}]}
+{"messages": [{"role": "user", "content": "What is data analysis?"}]}
+{"messages": [{"role": "user", "content": "Explain database design."}]}
+{"messages": [{"role": "user", "content": "How to scale applications?"}]}
+{"messages": [{"role": "user", "content": "What is web development?"}]}
+{"messages": [{"role": "user", "content": "How to learn React?"}]}
+{"messages": [{"role": "user", "content": "What is frontend development?"}]}
+{"messages": [{"role": "user", "content": "Explain backend development."}]}
+{"messages": [{"role": "user", "content": "How to mobile app development?"}]}
+{"messages": [{"role": "user", "content": "What is UI/UX design?"}]}
+{"messages": [{"role": "user", "content": "How to responsive web design?"}]}
+{"messages": [{"role": "user", "content": "What is CSS framework?"}]}
+{"messages": [{"role": "user", "content": "Explain JavaScript frameworks."}]}
+{"messages": [{"role": "user", "content": "How to learn TypeScript?"}]}
+{"messages": [{"role": "user", "content": "What is Node.js?"}]}
+{"messages": [{"role": "user", "content": "How to build APIs?"}]}
+{"messages": [{"role": "user", "content": "What is database management?"}]}
+{"messages": [{"role": "user", "content": "Explain system architecture."}]}
+{"messages": [{"role": "user", "content": "How to improve code readability?"}]}
+{"messages": [{"role": "user", "content": "What is software design patterns?"}]}
+{"messages": [{"role": "user", "content": "How to debug complex issues?"}]}
+{"messages": [{"role": "user", "content": "What is code review process?"}]}
+{"messages": [{"role": "user", "content": "Explain agile methodology."}]}
+{"messages": [{"role": "user", "content": "How to technical documentation?"}]}
+{"messages": [{"role": "user", "content": "What is continuous integration?"}]}
+{"messages": [{"role": "user", "content": "How to automated testing?"}]}
+{"messages": [{"role": "user", "content": "What is load testing?"}]}
+{"messages": [{"role": "user", "content": "Explain performance optimization."}]}
+{"messages": [{"role": "user", "content": "How to server configuration?"}]}
+{"messages": [{"role": "user", "content": "What is network security?"}]}
+{"messages": [{"role": "user", "content": "How to secure applications?"}]}
+{"messages": [{"role": "user", "content": "What is encryption?"}]}
+{"messages": [{"role": "user", "content": "Explain authentication methods."}]}
+{"messages": [{"role": "user", "content": "How to data protection?"}]}
+{"messages": [{"role": "user", "content": "What is ethical hacking?"}]}
+{"messages": [{"role": "user", "content": "How to security testing?"}]}
+{"messages": [{"role": "user", "content": "What is penetration testing?"}]}
+{"messages": [{"role": "user", "content": "Explain network protocols."}]}
+{"messages": [{"role": "user", "content": "How to system administration?"}]}
+{"messages": [{"role": "user", "content": "What is Linux administration?"}]}
+{"messages": [{"role": "user", "content": "How to server management?"}]}
+{"messages": [{"role": "user", "content": "What is cloud architecture?"}]}
+{"messages": [{"role": "user", "content": "Explain AWS services."}]}
+{"messages": [{"role": "user", "content": "How to Azure deployment?"}]}
+{"messages": [{"role": "user", "content": "What is Google Cloud Platform?"}]}
+{"messages": [{"role": "user", "content": "How to infrastructure as code?"}]}
+{"messages": [{"role": "user", "content": "What is Terraform?"}]}
+{"messages": [{"role": "user", "content": "Explain containerization."}]}
+{"messages": [{"role": "user", "content": "How to microservices deployment?"}]}
+{"messages": [{"role": "user", "content": "What is service mesh?"}]}
+{"messages": [{"role": "user", "content": "How to monitor applications?"}]}
+{"messages": [{"role": "user", "content": "What is observability?"}]}
+{"messages": [{"role": "user", "content": "Explain logging best practices."}]}
+{"messages": [{"role": "user", "content": "How to error handling?"}]}
+{"messages": [{"role": "user", "content": "What is fault tolerance?"}]}
+{"messages": [{"role": "user", "content": "How to system reliability?"}]}
+{"messages": [{"role": "user", "content": "What is disaster recovery?"}]}
+{"messages": [{"role": "user", "content": "Explain backup strategies."}]}
+{"messages": [{"role": "user", "content": "How to business continuity?"}]}
+{"messages": [{"role": "user", "content": "What is incident response?"}]}
