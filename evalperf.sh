@@ -1,26 +1,34 @@
 #!/bin/bash
 
-# 默认配置
+# ============================================================================
+# evalperf.sh - LLM性能快速测试工具
+# ============================================================================
+
+# ============================================================================
+# 配置变量
+# ============================================================================
 MODEL=${EVALPERF_MODEL:-"Qwen3-VL-235B-A22B-Instruct"}
 URL=${EVALPERF_URL:-"http://100.125.1.153/v1/chat/completions"}
 DATASET=${EVALPERF_DATASET:-"./prompts/p_short.jsonl"}
 MAX_TOKENS=${EVALPERF_MAX_TOKENS:-200}
-OUTPUT_DIR=${EVALPERF_OUTPUT_DIR:-"./results"}
+OUTPUT_DIR=${EVALPERF_OUTPUT_DIR:-"./perf_results"}
 PARALLEL=${EVALPERF_PARALLEL:-64}
 REQUESTS=${EVALPERF_REQUESTS:-200}
+CONNECT_TIMEOUT=${EVALPERF_CONNECT_TIMEOUT:-30}
+READ_TIMEOUT=${EVALPERF_READ_TIMEOUT:-60}
+RATE_LIMIT=${EVALPERF_RATE_LIMIT:-""}
+DISABLE_TIMEOUT=${EVALPERF_NO_TIMEOUT:-false}
 
-# 检测终端颜色支持
-detect_colors() {
+# ============================================================================
+# 颜色和日志函数
+# ============================================================================
+init_colors() {
+    # 检测终端是否支持颜色
     if [[ -t "$TERM" ]] || [[ "$TERM" = "dumb" ]] || [[ -n "$NO_COLOR" ]]; then
-        # 终端不支持颜色或用户禁用颜色
-        RED=''
-        GREEN=''
-        NC=''
-        BOLD=''
+        RED='' GREEN='' NC='' BOLD=''
         return 1
     fi
     
-    # 测试终端是否支持颜色
     if command -v tput &>/dev/null; then
         RED=$(tput setaf 1 2>/dev/null || echo '')
         GREEN=$(tput setaf 2 2>/dev/null || echo '')
@@ -33,16 +41,12 @@ detect_colors() {
         BOLD='\033[1m'
     fi
     
-    # 如果颜色变量为空，说明不支持颜色
-    [[ -z "$GREEN" ]] && return 1 || return 0
+    [[ -n "$GREEN" ]]
 }
 
 # 初始化颜色
-RED=''
-GREEN=''
-NC=''
-BOLD=''
-detect_colors
+RED='' GREEN='' NC='' BOLD=''
+init_colors
 
 log() { 
     if [[ -n "$GREEN" ]]; then
@@ -60,11 +64,205 @@ error() {
     fi
 }
 
+# ============================================================================
+# 环境检查
+# ============================================================================
 check_env() {
-    command -v evalscope &>/dev/null || { error "未找到 evalscope 命令，安装: pip install evalscope"; exit 2; }
-    mkdir -p "$OUTPUT_DIR" 2>/dev/null || { error "无法创建输出目录: $OUTPUT_DIR"; exit 2; }
+    command -v evalscope &>/dev/null || { 
+        error "未找到 evalscope 命令，安装: pip install evalscope"
+        exit 2
+    }
+    mkdir -p "$OUTPUT_DIR" 2>/dev/null || { 
+        error "无法创建输出目录: $OUTPUT_DIR"
+        exit 2
+    }
 }
 
+# ============================================================================
+# 参数验证
+# ============================================================================
+validate_range() {
+    local value=$1 min=$2 max=$3 name=$4
+    if (( value < min || value > max )); then
+        error "$name 必须在 $min-$max 之间，当前: $value"
+        exit 1
+    fi
+}
+
+validate_basic_params() {
+    local parallel=${1:-$PARALLEL}
+    local requests=${2:-$REQUESTS}
+    
+    validate_range "$parallel" 1 256 "并发数"
+    validate_range "$requests" 1 999999 "请求数"
+    validate_range "$MAX_TOKENS" 1 8192 "最大令牌数"
+    
+    if [[ ! -f "$DATASET" ]]; then
+        error "数据集不存在: $DATASET"
+        exit 1
+    fi
+    
+    if [[ ! -s "$DATASET" ]]; then
+        error "数据集文件为空: $DATASET"
+        exit 1
+    fi
+    
+    if [[ ! "$URL" =~ ^https?:// ]]; then
+        error "URL格式不正确，必须以http://或https://开头: $URL"
+        exit 1
+    fi
+}
+
+validate_timeout_params() {
+    if [[ "$DISABLE_TIMEOUT" != "true" ]]; then
+        validate_range "$CONNECT_TIMEOUT" 1 300 "连接超时"
+        validate_range "$READ_TIMEOUT" 1 600 "读取超时"
+    fi
+}
+
+validate_rate_limit() {
+    if [[ -n "$RATE_LIMIT" ]]; then
+        validate_range "$RATE_LIMIT" 1 1000 "速率限制"
+    fi
+}
+
+validate_params() {
+    validate_basic_params "$@"
+    validate_timeout_params
+    validate_rate_limit
+}
+
+# ============================================================================
+# 命令构建
+# ============================================================================
+build_evalscope_command() {
+    local parallel=$1
+    local requests=$2
+    local output_dir=$3
+    local prompt=$4
+    
+    local cmd="evalscope perf"
+    cmd="$cmd --model \"$MODEL\""
+    cmd="$cmd --api \"openai\""
+    cmd="$cmd --url \"$URL\""
+    cmd="$cmd --prompt \"$prompt\""
+    cmd="$cmd --parallel \"$parallel\""
+    cmd="$cmd --number \"$requests\""
+    cmd="$cmd --max-tokens \"$MAX_TOKENS\""
+    cmd="$cmd --outputs-dir \"$output_dir\""
+    cmd="$cmd --no-test-connection"
+    
+    if [[ "$DISABLE_TIMEOUT" != "true" ]]; then
+        cmd="$cmd --connect-timeout $CONNECT_TIMEOUT"
+        cmd="$cmd --read-timeout $READ_TIMEOUT"
+    fi
+    
+    if [[ -n "$RATE_LIMIT" ]]; then
+        cmd="$cmd --rate $RATE_LIMIT"
+    fi
+    
+    echo "$cmd"
+}
+
+# ============================================================================
+# 测试执行
+# ============================================================================
+get_first_prompt() {
+    head -1 "$DATASET" | jq -r '.messages[0].content' 2>/dev/null || echo "Hello, how are you?"
+}
+
+run_single_test() {
+    local parallel=$1
+    local requests=$2
+    local dataset_basename=$3
+    
+    validate_params "$parallel" "$requests"
+    
+    local name="p${parallel}_n${requests}_d${dataset_basename}"
+    local output_dir="$OUTPUT_DIR/$name"
+    mkdir -p "$output_dir"
+    
+    local first_prompt=$(get_first_prompt)
+    local evalscope_cmd=$(build_evalscope_command "$parallel" "$requests" "$output_dir" "$first_prompt")
+    
+    log "🚀 性能测试开始"
+    log "📋 配置: 并发=$parallel 请求=$requests 提示=$first_prompt"
+    log "⏱️  预计耗时: $((requests * 2 / parallel))分钟"
+    log "----------------------------------------"
+    log "🔧 执行命令: $evalscope_cmd"
+    
+    eval "$evalscope_cmd" 2>&1
+    local exit_code=$?
+    
+    if [ $exit_code -eq 0 ]; then
+        log "✅ 测试完成"
+        log "💾 结果保存: $output_dir"
+    else
+        error "❌ 测试执行失败 (退出码: $exit_code): 1.服务未运行 2.并发数过高 3.网络问题 4.参数错误"
+        exit 3
+    fi
+    log "----------------------------------------"
+}
+
+quick_test() {
+    log "⚡ 快速验证模式 (2分钟)"
+    local dataset_basename=$(basename "$DATASET" .jsonl)
+    run_single_test 32 50 "$dataset_basename"
+    printf "\n💡 提示: 使用 -p 64 -n 200 进行完整测试\n"
+}
+
+# ============================================================================
+# 参数解析
+# ============================================================================
+parse_multi_values() {
+    local param="$1"
+    shift
+    local values=()
+    
+    while [[ $# -gt 0 && ! "$1" =~ ^- ]]; do
+        values+=("$1")
+        shift
+    done
+    
+    if [[ ${#values[@]} -eq 0 ]]; then
+        error "参数 $param 需要至少一个数值"
+        usage
+        exit 1
+    fi
+    
+    echo "${values[@]}"
+}
+
+parse_single_arg() {
+    local arg="$1" var_name="$2" shift_count=1
+    [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }
+    declare -g "$var_name"="$2"
+    echo $((shift_count + 1))
+}
+
+handle_parallel_arg() {
+    local -a parallel_values
+    parallel_values=($(parse_multi_values "-p" "$@"))
+    local processed=${#parallel_values[@]}
+    for ((i=0; i<processed; i++)); do
+        shift
+    done
+    echo "$processed"
+}
+
+handle_request_arg() {
+    local -a request_values
+    request_values=($(parse_multi_values "-n" "$@"))
+    local processed=${#request_values[@]}
+    for ((i=0; i<processed; i++)); do
+        shift
+    done
+    echo "$processed"
+}
+
+# ============================================================================
+# 帮助信息
+# ============================================================================
 usage() {
     cat << EOF
 ${GREEN}evalperf.sh${NC} - LLM性能快速测试工具
@@ -85,6 +283,10 @@ ${GREEN}参数说明${NC}:
   ${GREEN}-u <url>${NC}    服务URL (默认: http://100.125.1.153/v1/chat/completions, 环境变量: EVALPERF_URL)
   ${GREEN}-t <num>${NC}    最大令牌数 (默认: 200, 环境变量: EVALPERF_MAX_TOKENS)
   ${GREEN}--quick${NC}      快速验证模式 (32并发, 50请求)
+  ${GREEN}--timeout <num>${NC} 连接超时秒数 (默认: 30)
+  ${GREEN}--read-timeout <num>${NC} 读取超时秒数 (默认: 60)
+  ${GREEN}--rate <num>${NC}  每秒请求数限制 (默认: 无限制)
+  ${GREEN}--no-timeout${NC} 禁用所有超时限制
   ${GREEN}-h, --help${NC}   显示帮助信息
 
 ${GREEN}示例${NC}:
@@ -94,172 +296,72 @@ ${GREEN}示例${NC}:
   evalperf.sh -p 32 64 -n 50 100          # 多组测试：32/64并发 × 50/100请求
   evalperf.sh -p 64 -n 200 -d custom.jsonl # 自定义数据集
   evalperf.sh -m "gpt-4" -u "http://localhost:8000/v1/chat/completions" -t 512 # 自定义模型和URL
+  evalperf.sh --timeout 60 --read-timeout 120 # 设置更长的超时时间
+  evalperf.sh --rate 10 # 限制为每秒10个请求
+  evalperf.sh --no-timeout # 禁用所有超时限制（用于长时间测试）
   EVALPERF_PARALLEL=32 EVALPERF_REQUESTS=100 evalperf.sh       # 通过环境变量设置默认值
 EOF
 }
 
-validate_params() {
-    local parallel=${1:-$PARALLEL}
-    local requests=${2:-$REQUESTS}
-    
-    if (( parallel < 1 || parallel > 256 )); then
-        error "并发数必须在 1-256 之间，当前: $parallel"
-        exit 1
-    fi
-    if (( requests < 1 )); then
-        error "请求数至少为 1，当前: $requests"
-        exit 1
-    fi
-    if (( MAX_TOKENS < 1 || MAX_TOKENS > 8192 )); then
-        error "最大令牌数必须在 1-8192 之间，当前: $MAX_TOKENS"
-        exit 1
-    fi
-    if [[ ! -f "$DATASET" ]]; then
-        error "数据集不存在: $DATASET"
-        exit 1
-    fi
-    if [[ ! -s "$DATASET" ]]; then
-        error "数据集文件为空: $DATASET"
-        exit 1
-    fi
-    if [[ ! "$URL" =~ ^https?:// ]]; then
-        error "URL格式不正确，必须以http://或https://开头: $URL"
-        exit 1
-    fi
-}
-
-run_single_test() {
-    local parallel=$1 requests=$2 dataset_basename=$3
-    validate_params "$parallel" "$requests"
-    local name="p${parallel}_n${requests}_d${dataset_basename}"
-    local output_dir="$OUTPUT_DIR/$name"
-    mkdir -p "$output_dir"
-    
-    # 从数据集中获取第一个提示用于测试
-    local first_prompt=$(head -1 "$DATASET" | jq -r '.messages[0].content' 2>/dev/null || echo "Hello, how are you?")
-    
-    log "🚀 性能测试开始"
-    log "📋 配置: 并发=$parallel 请求=$requests 提示=$first_prompt"
-    log "⏱️  预计耗时: $((requests * 2 / parallel))分钟"
-    log "----------------------------------------"
-    # 执行 evalscope 命令并直接输出结果
-    # 设置更短的超时时间以避免无限重试
-    timeout 300 evalscope perf --model "$MODEL" --api "openai" --url "$URL" --prompt "$first_prompt" \
-        --parallel "$parallel" --number "$requests" --max-tokens "$MAX_TOKENS" \
-        --outputs-dir "$output_dir" --no-test-connection 2>&1
-    local exit_code=$?
-    
-    # 检查是否被timeout终止
-    if [ $exit_code -eq 124 ]; then
-        error "❌ 测试超时 (5分钟): 服务响应过慢或网络连接问题"
-        exit 3
-    fi
-    
-    # 检查测试是否成功完成
-    if [ $exit_code -eq 0 ]; then
-        log "✅ 测试完成"
-        log "💾 结果保存: $output_dir"
-    else
-        error "❌ 测试执行失败: 1.服务未运行 2.并发数过高 3.网络问题"
-        exit 3
-    fi
-    log "----------------------------------------"
-}
-
-quick_test() {
-    log "⚡ 快速验证模式 (2分钟)"
+# ============================================================================
+# 主函数
+# ============================================================================
+run_test_combinations() {
     local dataset_basename=$(basename "$DATASET" .jsonl)
-    run_single_test 32 50 "$dataset_basename"
-    printf "\n💡 提示: 使用 -p 64 -n 200 进行完整测试\n"
-}
-
-# 解析多个数值的函数
-parse_multi_values() {
-    local param="$1"
-    shift
-    local values=()
-    
-    # 收集所有数值直到遇到下一个参数或结束
-    while [[ $# -gt 0 && ! "$1" =~ ^- ]]; do
-        values+=("$1")
-        shift
+    for p_val in "${parallel_values[@]}"; do
+        for n_val in "${request_values[@]}"; do
+            if [[ ${#parallel_values[@]} -gt 1 || ${#request_values[@]} -gt 1 ]]; then
+                log "🔄 运行测试组合: 并发=$p_val 请求=$n_val"
+            fi
+            run_single_test "$p_val" "$n_val" "$dataset_basename"
+        done
     done
-    
-    if [[ ${#values[@]} -eq 0 ]]; then
-        error "参数 $param 需要至少一个数值"
-        usage
-        exit 1
-    fi
-    
-    echo "${values[@]}"
 }
 
-# 修复参数解析逻辑
 main() {
     local mode="single"
-    local parallel_values=()
-    local request_values=()
+    local -a parallel_values=()
+    local -a request_values=()
     
     # 解析命令行参数
     while [[ $# -gt 0 ]]; do
         case $1 in
-            -p) 
-                shift
-                parallel_values=($(parse_multi_values "-p" "$@"))
-                # 计算已处理的参数数量
-                local processed=${#parallel_values[@]}
-                for ((i=0; i<processed; i++)); do
-                    shift
-                done ;;
-            -n) 
-                shift
-                request_values=($(parse_multi_values "-n" "$@"))
-                # 计算已处理的参数数量
-                local processed=${#request_values[@]}
-                for ((i=0; i<processed; i++)); do
-                    shift
-                done ;;
-            -d) 
-                [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }
-                DATASET="$2"; shift 2 ;;
-            -o) 
-                [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }
-                OUTPUT_DIR="$2"; shift 2 ;;
-            -m) 
-                [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }
-                MODEL="$2"; shift 2 ;;
-            -u) 
-                [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }
-                URL="$2"; shift 2 ;;
-            -t) 
-                [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }
-                MAX_TOKENS="$2"; shift 2 ;;
+            -p) shift; parallel_values=($(parse_multi_values "-p" "$@")); 
+                   for ((i=0; i<${#parallel_values[@]}; i++)); do shift; done ;;
+            -n) shift; request_values=($(parse_multi_values "-n" "$@")); 
+                   for ((i=0; i<${#request_values[@]}; i++)); do shift; done ;;
+            -d) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }; 
+                   DATASET="$2"; shift 2 ;;
+            -o) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }; 
+                   OUTPUT_DIR="$2"; shift 2 ;;
+            -m) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }; 
+                   MODEL="$2"; shift 2 ;;
+            -u) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }; 
+                   URL="$2"; shift 2 ;;
+            -t) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }; 
+                   MAX_TOKENS="$2"; shift 2 ;;
+            --timeout) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }; 
+                       CONNECT_TIMEOUT="$2"; shift 2 ;;
+            --read-timeout) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }; 
+                         READ_TIMEOUT="$2"; shift 2 ;;
+            --rate) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }; 
+                    RATE_LIMIT="$2"; shift 2 ;;
+            --no-timeout) DISABLE_TIMEOUT="true"; shift ;;
             --quick) mode="quick"; shift ;;
             -h|--help) usage; exit 0 ;;
             *) error "未知参数: $1"; usage; exit 1 ;;
         esac
     done
     
-    # 如果没有指定 -p 或 -n，使用默认值
+    # 设置默认值
     [[ ${#parallel_values[@]} -eq 0 ]] && parallel_values=("$PARALLEL")
     [[ ${#request_values[@]} -eq 0 ]] && request_values=("$REQUESTS")
     
     check_env
+    
     case $mode in
-        quick) 
-            # 快速模式忽略指定的参数，使用固定值
-            quick_test ;;
-        single) 
-            # 运行多组测试
-            local dataset_basename=$(basename "$DATASET" .jsonl)
-            for p_val in "${parallel_values[@]}"; do
-                for n_val in "${request_values[@]}"; do
-                    if [[ ${#parallel_values[@]} -gt 1 || ${#request_values[@]} -gt 1 ]]; then
-                        log "🔄 运行测试组合: 并发=$p_val 请求=$n_val"
-                    fi
-                    run_single_test "$p_val" "$n_val" "$dataset_basename"
-                done
-            done ;;
+        quick) quick_test ;;
+        single) run_test_combinations ;;
     esac
 }
 
