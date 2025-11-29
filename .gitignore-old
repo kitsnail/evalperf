@@ -12,10 +12,12 @@
 !prompts/
 !prompts/*
 !README.md
+!results/
+
 
 # Ignore generated test results
-results/
-results/*
+#results/
+#results/*
 
 # Ignore log files
 *.log
