@@ -1,0 +1,35 @@
+# Keep only essential project files
+# Allow these files to be tracked:
+# - evalperf.sh (main script)
+# - prompts/ (dataset files)
+# - README.md (documentation)
+
+# Ignore everything else
+*
+
+# Then explicitly include the files we want to keep
+!evalperf.sh
+!prompts/
+!prompts/*
+!README.md
+
+# Ignore generated test results
+results/
+results/*
+
+# Ignore log files
+*.log
+
+# Ignore temporary files
+*.tmp
+*.swp
+*.swo
+
+# Ignore editor files
+.vscode/
+.idea/
+*.DS_Store
+
+# Ignore planning and help files
+plan.md
+evalscope-help.md
