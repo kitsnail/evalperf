@@ -14,9 +14,10 @@ MAX_TOKENS=${EVALPERF_MAX_TOKENS:-200}
 OUTPUT_DIR=${EVALPERF_OUTPUT_DIR:-"./perf_results"}
 PARALLEL=${EVALPERF_PARALLEL:-64}
 REQUESTS=${EVALPERF_REQUESTS:-200}
-CONNECT_TIMEOUT=${EVALPERF_CONNECT_TIMEOUT:-30}
-READ_TIMEOUT=${EVALPERF_READ_TIMEOUT:-60}
+CONNECT_TIMEOUT=${EVALPERF_CONNECT_TIMEOUT:-300}
+READ_TIMEOUT=${EVALPERF_READ_TIMEOUT:-300}
 RATE_LIMIT=${EVALPERF_RATE_LIMIT:-""}
+SLEEP_INTERVAL=${EVALPERF_SLEEP_INTERVAL:-5}
 DISABLE_TIMEOUT=${EVALPERF_NO_TIMEOUT:-false}
 
 # ============================================================================
@@ -28,7 +29,7 @@ init_colors() {
         RED='' GREEN='' NC='' BOLD=''
         return 1
     fi
-    
+
     if command -v tput &>/dev/null; then
         RED=$(tput setaf 1 2>/dev/null || echo '')
         GREEN=$(tput setaf 2 2>/dev/null || echo '')
@@ -40,7 +41,7 @@ init_colors() {
         NC='\033[0m'
         BOLD='\033[1m'
     fi
-    
+
     [[ -n "$GREEN" ]]
 }
 
@@ -48,7 +49,7 @@ init_colors() {
 RED='' GREEN='' NC='' BOLD=''
 init_colors
 
-log() { 
+log() {
     if [[ -n "$GREEN" ]]; then
         echo -e "${GREEN}[$(date +%H:%M:%S)]${NC} $*"
     else
@@ -56,7 +57,7 @@ log() {
     fi
 }
 
-error() { 
+error() {
     if [[ -n "$RED" ]]; then
         echo -e "${RED}[ERROR]${NC} $*" >&2
     else
@@ -68,11 +69,11 @@ error() {
 # 环境检查
 # ============================================================================
 check_env() {
-    command -v evalscope &>/dev/null || { 
+    command -v evalscope &>/dev/null || {
         error "未找到 evalscope 命令，安装: pip install evalscope"
         exit 2
     }
-    mkdir -p "$OUTPUT_DIR" 2>/dev/null || { 
+    mkdir -p "$OUTPUT_DIR" 2>/dev/null || {
         error "无法创建输出目录: $OUTPUT_DIR"
         exit 2
     }
@@ -92,21 +93,21 @@ validate_range() {
 validate_basic_params() {
     local parallel=${1:-$PARALLEL}
     local requests=${2:-$REQUESTS}
-    
-    validate_range "$parallel" 1 256 "并发数"
+
+    validate_range "$parallel" 1 2048 "并发数"
     validate_range "$requests" 1 999999 "请求数"
-    validate_range "$MAX_TOKENS" 1 8192 "最大令牌数"
-    
+    validate_range "$MAX_TOKENS" 1 81920 "最大令牌数"
+
     if [[ ! -f "$DATASET" ]]; then
         error "数据集不存在: $DATASET"
         exit 1
     fi
-    
+
     if [[ ! -s "$DATASET" ]]; then
         error "数据集文件为空: $DATASET"
         exit 1
     fi
-    
+
     if [[ ! "$URL" =~ ^https?:// ]]; then
         error "URL格式不正确，必须以http://或https://开头: $URL"
         exit 1
@@ -140,7 +141,7 @@ build_evalscope_command() {
     local requests=$2
     local output_dir=$3
     local prompt=$4
-    
+
     local cmd="evalscope perf"
     cmd="$cmd --model \"$MODEL\""
     cmd="$cmd --api \"openai\""
@@ -151,16 +152,19 @@ build_evalscope_command() {
     cmd="$cmd --max-tokens \"$MAX_TOKENS\""
     cmd="$cmd --outputs-dir \"$output_dir\""
     cmd="$cmd --no-test-connection"
-    
+    cmd="$cmd --no-stream"
+
     if [[ "$DISABLE_TIMEOUT" != "true" ]]; then
         cmd="$cmd --connect-timeout $CONNECT_TIMEOUT"
         cmd="$cmd --read-timeout $READ_TIMEOUT"
     fi
-    
+
     if [[ -n "$RATE_LIMIT" ]]; then
         cmd="$cmd --rate $RATE_LIMIT"
     fi
-    
+
+    cmd="$cmd --sleep-interval $SLEEP_INTERVAL"
+
     echo "$cmd"
 }
 
@@ -175,25 +179,25 @@ run_single_test() {
     local parallel=$1
     local requests=$2
     local dataset_basename=$3
-    
+
     validate_params "$parallel" "$requests"
-    
+
     local name="p${parallel}_n${requests}_d${dataset_basename}"
     local output_dir="$OUTPUT_DIR/$name"
     mkdir -p "$output_dir"
-    
+
     local first_prompt=$(get_first_prompt)
     local evalscope_cmd=$(build_evalscope_command "$parallel" "$requests" "$output_dir" "$first_prompt")
-    
+
     log "🚀 性能测试开始"
     log "📋 配置: 并发=$parallel 请求=$requests 提示=$first_prompt"
     log "⏱️  预计耗时: $((requests * 2 / parallel))分钟"
     log "----------------------------------------"
     log "🔧 执行命令: $evalscope_cmd"
-    
+
     eval "$evalscope_cmd" 2>&1
     local exit_code=$?
-    
+
     if [ $exit_code -eq 0 ]; then
         log "✅ 测试完成"
         log "💾 结果保存: $output_dir"
@@ -211,6 +215,114 @@ quick_test() {
     printf "\n💡 提示: 使用 -p 64 -n 200 进行完整测试\n"
 }
 
+# 1. 快速验证测试 (Quick Verification Test)
+quick_verification_test() {
+    log "⚡ 快速验证测试 (2分钟) - 基础配置，适合快速验证服务可用性"
+    local dataset_basename=$(basename "$DATASET" .jsonl)
+    
+    # 设置参数：--timeout 30 --read-timeout 60 --sleep-interval 5 --rate 5
+    local original_connect_timeout=$CONNECT_TIMEOUT
+    local original_read_timeout=$READ_TIMEOUT
+    local original_sleep_interval=$SLEEP_INTERVAL
+    local original_rate_limit=$RATE_LIMIT
+    
+    CONNECT_TIMEOUT=30
+    READ_TIMEOUT=60
+    SLEEP_INTERVAL=5
+    RATE_LIMIT=5
+    
+    run_single_test 32 50 "$dataset_basename"
+    
+    # 恢复原始参数
+    CONNECT_TIMEOUT=$original_connect_timeout
+    READ_TIMEOUT=$original_read_timeout
+    SLEEP_INTERVAL=$original_sleep_interval
+    RATE_LIMIT=$original_rate_limit
+    
+    printf "\n💡 提示: 使用标准性能测试进行更全面的评估\n"
+}
+
+# 2. 标准性能测试 (Standard Performance Test)
+standard_performance_test() {
+    log "📊 标准性能测试 (5分钟) - 生产环境基准测试，准确测量真实性能"
+    local dataset_basename=$(basename "$DATASET" .jsonl)
+    
+    # 设置参数：--timeout 120 --read-timeout 300 --sleep-interval 10 --rate 20
+    local original_connect_timeout=$CONNECT_TIMEOUT
+    local original_read_timeout=$READ_TIMEOUT
+    local original_sleep_interval=$SLEEP_INTERVAL
+    local original_rate_limit=$RATE_LIMIT
+    
+    CONNECT_TIMEOUT=120
+    READ_TIMEOUT=300
+    SLEEP_INTERVAL=10
+    RATE_LIMIT=20
+    
+    run_single_test 64 200 "$dataset_basename"
+    
+    # 恢复原始参数
+    CONNECT_TIMEOUT=$original_connect_timeout
+    READ_TIMEOUT=$original_read_timeout
+    SLEEP_INTERVAL=$original_sleep_interval
+    RATE_LIMIT=$original_rate_limit
+    
+    printf "\n💡 提示: 如需更高压力测试，请使用生产环境压力测试\n"
+}
+
+# 3. 生产环境压力测试 (Production Environment Stress Test)
+production_stress_test() {
+    log "🚀 生产环境压力测试 (8分钟) - 高负载测试，验证生产环境稳定性"
+    local dataset_basename=$(basename "$DATASET" .jsonl)
+    
+    # 设置参数：--timeout 300 --read-timeout 600 --sleep-interval 15 --rate 50
+    local original_connect_timeout=$CONNECT_TIMEOUT
+    local original_read_timeout=$READ_TIMEOUT
+    local original_sleep_interval=$SLEEP_INTERVAL
+    local original_rate_limit=$RATE_LIMIT
+    
+    CONNECT_TIMEOUT=300
+    READ_TIMEOUT=600
+    SLEEP_INTERVAL=15
+    RATE_LIMIT=50
+    
+    run_single_test 128 300 "$dataset_basename"
+    
+    # 恢复原始参数
+    CONNECT_TIMEOUT=$original_connect_timeout
+    READ_TIMEOUT=$original_read_timeout
+    SLEEP_INTERVAL=$original_sleep_interval
+    RATE_LIMIT=$original_rate_limit
+    
+    printf "\n💡 提示: 极限压力测试可找到服务最大承载能力\n"
+}
+
+# 4. 极限压力测试 (Extreme Stress Test)
+extreme_stress_test() {
+    log "🔥 极限压力测试 (15分钟) - 寻找服务性能极限，无速率限制"
+    local dataset_basename=$(basename "$DATASET" .jsonl)
+    
+    # 设置参数：--timeout 300 --read-timeout 600 --sleep-interval 30 (无速率限制)
+    local original_connect_timeout=$CONNECT_TIMEOUT
+    local original_read_timeout=$READ_TIMEOUT
+    local original_sleep_interval=$SLEEP_INTERVAL
+    local original_rate_limit=$RATE_LIMIT
+    
+    CONNECT_TIMEOUT=300
+    READ_TIMEOUT=600
+    SLEEP_INTERVAL=30
+    RATE_LIMIT=""
+    
+    run_single_test 256 500 "$dataset_basename"
+    
+    # 恢复原始参数
+    CONNECT_TIMEOUT=$original_connect_timeout
+    READ_TIMEOUT=$original_read_timeout
+    SLEEP_INTERVAL=$original_sleep_interval
+    RATE_LIMIT=$original_rate_limit
+    
+    printf "\n💡 提示: 请确保服务器资源充足，避免系统过载\n"
+}
+
 # ============================================================================
 # 参数解析
 # ============================================================================
@@ -218,18 +330,18 @@ parse_multi_values() {
     local param="$1"
     shift
     local values=()
-    
+
     while [[ $# -gt 0 && ! "$1" =~ ^- ]]; do
         values+=("$1")
         shift
     done
-    
+
     if [[ ${#values[@]} -eq 0 ]]; then
         error "参数 $param 需要至少一个数值"
         usage
         exit 1
     fi
-    
+
     echo "${values[@]}"
 }
 
@@ -273,6 +385,12 @@ ${GREEN}用法${NC}:
 ${GREEN}常用命令${NC}:
   evalperf.sh                    快速验证（默认）
   evalperf.sh -p 64 -n 200      单次完整测试
+  
+${GREEN}预设测试场景${NC}:
+  evalperf.sh --quick-verification 快速验证测试 (2分钟, 32并发50请求)
+  evalperf.sh --standard          标准性能测试 (5分钟, 64并发200请求)  
+  evalperf.sh --production        生产环境压力测试 (8分钟, 128并发300请求)
+  evalperf.sh --extreme           极限压力测试 (15分钟, 256并发500请求)
 
 ${GREEN}参数说明${NC}:
   ${GREEN}-p <num> [num...]${NC}    并发数 (默认: 64, 环境变量: EVALPERF_PARALLEL)
@@ -322,45 +440,53 @@ main() {
     local mode="single"
     local -a parallel_values=()
     local -a request_values=()
-    
+
     # 解析命令行参数
     while [[ $# -gt 0 ]]; do
         case $1 in
-            -p) shift; parallel_values=($(parse_multi_values "-p" "$@")); 
+            -p) shift; parallel_values=($(parse_multi_values "-p" "$@"));
                    for ((i=0; i<${#parallel_values[@]}; i++)); do shift; done ;;
-            -n) shift; request_values=($(parse_multi_values "-n" "$@")); 
+            -n) shift; request_values=($(parse_multi_values "-n" "$@"));
                    for ((i=0; i<${#request_values[@]}; i++)); do shift; done ;;
-            -d) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }; 
+            -d) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; };
                    DATASET="$2"; shift 2 ;;
-            -o) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }; 
+            -o) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; };
                    OUTPUT_DIR="$2"; shift 2 ;;
-            -m) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }; 
+            -m) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; };
                    MODEL="$2"; shift 2 ;;
-            -u) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }; 
+            -u) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; };
                    URL="$2"; shift 2 ;;
-            -t) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }; 
+            -t) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; };
                    MAX_TOKENS="$2"; shift 2 ;;
-            --timeout) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }; 
+            --timeout) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; };
                        CONNECT_TIMEOUT="$2"; shift 2 ;;
-            --read-timeout) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }; 
+            --read-timeout) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; };
                          READ_TIMEOUT="$2"; shift 2 ;;
-            --rate) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; }; 
+            --rate) [[ $# -lt 2 ]] && { error "参数 $1 需要值"; usage; exit 1; };
                     RATE_LIMIT="$2"; shift 2 ;;
             --no-timeout) DISABLE_TIMEOUT="true"; shift ;;
             --quick) mode="quick"; shift ;;
+            --quick-verification) mode="quick_verification"; shift ;;
+            --standard) mode="standard_performance"; shift ;;
+            --production) mode="production_stress"; shift ;;
+            --extreme) mode="extreme_stress"; shift ;;
             -h|--help) usage; exit 0 ;;
             *) error "未知参数: $1"; usage; exit 1 ;;
         esac
     done
-    
+
     # 设置默认值
     [[ ${#parallel_values[@]} -eq 0 ]] && parallel_values=("$PARALLEL")
     [[ ${#request_values[@]} -eq 0 ]] && request_values=("$REQUESTS")
-    
+
     check_env
-    
+
     case $mode in
         quick) quick_test ;;
+        quick_verification) quick_verification_test ;;
+        standard_performance) standard_performance_test ;;
+        production_stress) production_stress_test ;;
+        extreme_stress) extreme_stress_test ;;
         single) run_test_combinations ;;
     esac
 }

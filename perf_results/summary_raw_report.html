@@ -1,0 +1,795 @@
+
+        <!DOCTYPE html>
+        <html lang="zh-CN">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>性能测试分析报告</title>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+            <style>
+                
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 40px;
+            background: #f8f9fa;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+        
+        .stat-card h3 {
+            color: #667eea;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card .value {
+            font-size: 2.2em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card .label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .charts-section {
+            padding: 40px;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .chart-container h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+        
+        .table-container {
+            padding: 40px;
+            background: #f8f9fa;
+        }
+        
+        .table-container h2 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 1.5em;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+        
+        .table-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .table-section h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            font-weight: 600;
+            border-left: 4px solid #667eea;
+            padding-left: 12px;
+        }
+        
+        table {
+            width: 100%;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .success {
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .warning {
+            color: #ffc107;
+            font-weight: 600;
+        }
+        
+        .danger {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            background: #f8f9fa;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            table {
+                font-size: 0.85em;
+            }
+        }
+        
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <!-- 头部 -->
+                <div class="header">
+                    <h1>🚀 性能测试分析报告</h1>
+                    <p>生成时间: 2025-11-30 23:46:50</p>
+                </div>
+        
+
+                <!-- 关键指标卡片 -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>最高 QPS</h3>
+                        <div class="value">74.97</div>
+                        <div class="label">并发数: 256</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3>最高吞吐量</h3>
+                        <div class="value">5182</div>
+                        <div class="label">tokens/s</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3>最低延迟</h3>
+                        <div class="value">1</div>
+                        <div class="label">毫秒</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3>平均成功率</h3>
+                        <div class="value">100.0%</div>
+                        <div class="label">总测试: 30 组</div>
+                    </div>
+                </div>
+        
+
+                <!-- 图表区域 -->
+                <div class="charts-section">
+                    <!-- QPS 趋势 -->
+                    <div class="chart-container">
+                        <h2>📊 QPS 随并发数变化趋势</h2>
+                        <div class="chart-wrapper">
+                            <canvas id="qpsChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- 吞吐量趋势 -->
+                    <div class="chart-container">
+                        <h2>📈 Token 吞吐量趋势</h2>
+                        <div class="chart-wrapper">
+                            <canvas id="throughputChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- 延迟分析 -->
+                    <div class="chart-container">
+                        <h2>⏱️ 延迟分析 (P50/P95/P99)</h2>
+                        <div class="chart-wrapper">
+                            <canvas id="latencyChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- TTFT 分析 -->
+                    <div class="chart-container">
+                        <h2>🎯 首Token延迟 (TTFT)</h2>
+                        <div class="chart-wrapper">
+                            <canvas id="ttftChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- 成功率 -->
+                    <div class="chart-container">
+                        <h2>✅ 成功率与错误率</h2>
+                        <div class="chart-wrapper">
+                            <canvas id="successChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+        
+
+                <!-- 详细数据表 - 分组显示 -->
+                <div class="table-container">
+                    <h2>📋 详细测试数据</h2>
+                    
+                    <!-- Short Prompt Type -->
+                    <div class="table-section">
+                        <h3>🔵 Short 提示词测试数据</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>并发</th>
+                                    <th>请求数</th>
+                                    <th>QPS</th>
+                                    <th>吞吐量<br>(tok/s)</th>
+                                    <th>平均延迟<br>(ms)</th>
+                                    <th>P95延迟<br>(ms)</th>
+                                    <th>P99延迟<br>(ms)</th>
+                                    <th>TTFT<br>(ms)</th>
+                                    <th>成功率</th>
+                                    <th>错误率</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                        <tr>
+                            <td>1</td>
+                            <td>1000</td>
+                            <td>1.22</td>
+                            <td>79</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>2</td>
+                            <td>1000</td>
+                            <td>2.33</td>
+                            <td>152</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>4</td>
+                            <td>1000</td>
+                            <td>4.26</td>
+                            <td>285</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>8</td>
+                            <td>1000</td>
+                            <td>7.72</td>
+                            <td>521</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>16</td>
+                            <td>1000</td>
+                            <td>14.15</td>
+                            <td>954</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>2</td>
+                            <td>1</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>32</td>
+                            <td>1000</td>
+                            <td>25.29</td>
+                            <td>1738</td>
+                            <td>1</td>
+                            <td>2</td>
+                            <td>2</td>
+                            <td>1</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>64</td>
+                            <td>1000</td>
+                            <td>43.83</td>
+                            <td>2986</td>
+                            <td>1</td>
+                            <td>2</td>
+                            <td>2</td>
+                            <td>1</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>96</td>
+                            <td>1000</td>
+                            <td>55.32</td>
+                            <td>3768</td>
+                            <td>2</td>
+                            <td>2</td>
+                            <td>2</td>
+                            <td>2</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>128</td>
+                            <td>1000</td>
+                            <td>63.01</td>
+                            <td>4273</td>
+                            <td>2</td>
+                            <td>3</td>
+                            <td>3</td>
+                            <td>2</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>256</td>
+                            <td>1000</td>
+                            <td>70.55</td>
+                            <td>4839</td>
+                            <td>3</td>
+                            <td>4</td>
+                            <td>5</td>
+                            <td>3</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Medium Prompt Type -->
+                    <div class="table-section">
+                        <h3>🟢 Medium 提示词测试数据</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>并发</th>
+                                    <th>请求数</th>
+                                    <th>QPS</th>
+                                    <th>吞吐量<br>(tok/s)</th>
+                                    <th>平均延迟<br>(ms)</th>
+                                    <th>P95延迟<br>(ms)</th>
+                                    <th>P99延迟<br>(ms)</th>
+                                    <th>TTFT<br>(ms)</th>
+                                    <th>成功率</th>
+                                    <th>错误率</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                        <tr>
+                            <td>1</td>
+                            <td>1000</td>
+                            <td>1.21</td>
+                            <td>79</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>2</td>
+                            <td>1000</td>
+                            <td>2.28</td>
+                            <td>150</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>4</td>
+                            <td>1000</td>
+                            <td>4.22</td>
+                            <td>282</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>8</td>
+                            <td>1000</td>
+                            <td>7.67</td>
+                            <td>514</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>16</td>
+                            <td>1000</td>
+                            <td>14.04</td>
+                            <td>953</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>2</td>
+                            <td>1</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>32</td>
+                            <td>1000</td>
+                            <td>25.58</td>
+                            <td>1747</td>
+                            <td>1</td>
+                            <td>2</td>
+                            <td>2</td>
+                            <td>1</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>64</td>
+                            <td>1000</td>
+                            <td>42.79</td>
+                            <td>2943</td>
+                            <td>1</td>
+                            <td>2</td>
+                            <td>2</td>
+                            <td>1</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>96</td>
+                            <td>1000</td>
+                            <td>56.26</td>
+                            <td>3825</td>
+                            <td>2</td>
+                            <td>2</td>
+                            <td>2</td>
+                            <td>2</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>128</td>
+                            <td>1000</td>
+                            <td>63.39</td>
+                            <td>4390</td>
+                            <td>2</td>
+                            <td>3</td>
+                            <td>3</td>
+                            <td>2</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>256</td>
+                            <td>1000</td>
+                            <td>71.55</td>
+                            <td>4922</td>
+                            <td>3</td>
+                            <td>4</td>
+                            <td>5</td>
+                            <td>3</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Long Prompt Type -->
+                    <div class="table-section">
+                        <h3>🔴 Long 提示词测试数据</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>并发</th>
+                                    <th>请求数</th>
+                                    <th>QPS</th>
+                                    <th>吞吐量<br>(tok/s)</th>
+                                    <th>平均延迟<br>(ms)</th>
+                                    <th>P95延迟<br>(ms)</th>
+                                    <th>P99延迟<br>(ms)</th>
+                                    <th>TTFT<br>(ms)</th>
+                                    <th>成功率</th>
+                                    <th>错误率</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                        <tr>
+                            <td>1</td>
+                            <td>1000</td>
+                            <td>1.21</td>
+                            <td>78</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>2</td>
+                            <td>1000</td>
+                            <td>2.28</td>
+                            <td>149</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>4</td>
+                            <td>1000</td>
+                            <td>4.18</td>
+                            <td>278</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>8</td>
+                            <td>1000</td>
+                            <td>7.70</td>
+                            <td>516</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>16</td>
+                            <td>1000</td>
+                            <td>13.95</td>
+                            <td>950</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>2</td>
+                            <td>1</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>32</td>
+                            <td>1000</td>
+                            <td>25.13</td>
+                            <td>1738</td>
+                            <td>1</td>
+                            <td>2</td>
+                            <td>2</td>
+                            <td>1</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>64</td>
+                            <td>1000</td>
+                            <td>43.82</td>
+                            <td>2960</td>
+                            <td>1</td>
+                            <td>2</td>
+                            <td>2</td>
+                            <td>1</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>96</td>
+                            <td>1000</td>
+                            <td>53.55</td>
+                            <td>3695</td>
+                            <td>2</td>
+                            <td>2</td>
+                            <td>2</td>
+                            <td>2</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>128</td>
+                            <td>1000</td>
+                            <td>60.71</td>
+                            <td>4146</td>
+                            <td>2</td>
+                            <td>3</td>
+                            <td>3</td>
+                            <td>2</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                        <tr>
+                            <td>256</td>
+                            <td>1000</td>
+                            <td>74.97</td>
+                            <td>5182</td>
+                            <td>3</td>
+                            <td>4</td>
+                            <td>5</td>
+                            <td>3</td>
+                            <td class="success">100.0%</td>
+                            <td class="success">0.0%</td>
+                        </tr>
+                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+        
+
+                <!-- 页脚 -->
+                <div class="footer">
+                    <p>性能测试分析报告 | 数据来源: summary_raw.csv</p>
+                </div>
+            </div>
+        
+
+            <script>
+                // Chart.js 配置
+                Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto';
+                Chart.defaults.color = '#666';
+                
+                const parallels = [1, 1, 1, 2, 2, 2, 4, 4, 4, 8, 8, 8, 16, 16, 16, 32, 32, 32, 64, 64, 64, 96, 96, 96, 128, 128, 128, 256, 256, 256];
+        
+                // QPS 图表
+                new Chart(document.getElementById('qpsChart'), {"type": "bar", "data": {"labels": [1, 2, 4, 8, 16, 32, 64, 96, 128, 256], "datasets": [{"label": "QPS (short)", "data": [1.2205, 2.3275, 4.2644, 7.7188, 14.1453, 25.2904, 43.8284, 55.3158, 63.0081, 70.5521], "backgroundColor": "rgba(667eea", "borderColor": "#667eea", "borderWidth": 2, "borderRadius": 6}, {"label": "QPS (medium)", "data": [1.2083, 2.2785, 4.2166, 7.6726, 14.0398, 25.5833, 42.7879, 56.2634, 63.3886, 71.5522], "backgroundColor": "rgba(28a745", "borderColor": "#28a745", "borderWidth": 2, "borderRadius": 6}, {"label": "QPS (long)", "data": [1.2051, 2.2777, 4.1772, 7.6955, 13.9519, 25.1278, 43.8154, 53.554, 60.7069, 74.97], "backgroundColor": "rgba(ff6b6b", "borderColor": "#ff6b6b", "borderWidth": 2, "borderRadius": 6}]}, "options": {"responsive": true, "maintainAspectRatio": false, "plugins": {"legend": {"display": true, "position": "top"}, "tooltip": {"backgroundColor": "rgba(0,0,0,0.8)", "padding": 12, "titleFont": {"size": 14}, "bodyFont": {"size": 13}}}, "scales": {"x": {"title": {"display": true, "text": "\u5e76\u53d1\u6570", "font": {"size": 14, "weight": "bold"}}, "grid": {"display": false}}, "y": {"title": {"display": true, "text": "QPS (\u8bf7\u6c42/\u79d2)", "font": {"size": 14, "weight": "bold"}}, "beginAtZero": true}}}});
+            
+                // 吞吐量图表
+                new Chart(document.getElementById('throughputChart'), {"type": "bar", "data": {"labels": [1, 2, 4, 8, 16, 32, 64, 96, 128, 256], "datasets": [{"label": "Token \u541e\u5410\u91cf (short)", "data": [79.3318, 152.4464, 285.0815, 520.5636, 953.6482, 1737.7019, 2986.2503, 3768.1683, 4273.2705, 4839.0971], "backgroundColor": "rgba(667eea", "borderColor": "#667eea", "borderWidth": 2, "borderRadius": 6}, {"label": "Token \u541e\u5410\u91cf (medium)", "data": [78.5424, 149.5109, 281.9386, 514.0243, 953.0905, 1746.9056, 2942.6967, 3825.0129, 4390.294, 4922.1506], "backgroundColor": "rgba(28a745", "borderColor": "#28a745", "borderWidth": 2, "borderRadius": 6}, {"label": "Token \u541e\u5410\u91cf (long)", "data": [78.3322, 149.3123, 277.7559, 515.671, 950.2485, 1738.4151, 2959.5524, 3695.3306, 4145.9796, 5181.853], "backgroundColor": "rgba(ff6b6b", "borderColor": "#ff6b6b", "borderWidth": 2, "borderRadius": 6}]}, "options": {"responsive": true, "maintainAspectRatio": false, "plugins": {"legend": {"display": true}, "tooltip": {"backgroundColor": "rgba(0,0,0,0.8)", "padding": 12, "titleFont": {"size": 14}, "bodyFont": {"size": 13}}}, "scales": {"x": {"title": {"display": true, "text": "\u5e76\u53d1\u6570", "font": {"size": 14, "weight": "bold"}}, "grid": {"display": false}}, "y": {"title": {"display": true, "text": "Tokens/\u79d2", "font": {"size": 14, "weight": "bold"}}, "beginAtZero": true}}}});
+            
+                // 延迟图表
+                new Chart(document.getElementById('latencyChart'), {"type": "bar", "data": {"labels": [1, 2, 4, 8, 16, 32, 64, 96, 128, 256], "datasets": [{"label": "P95 \u5ef6\u8fdf (short)", "data": [0.9675, 1.0197, 1.1154, 1.2811, 1.3838, 1.6002, 1.7984, 2.4725, 2.6957, 4.2652], "backgroundColor": "rgba(667eea", "borderColor": "#667eea", "borderWidth": 2, "borderRadius": 6}, {"label": "P95 \u5ef6\u8fdf (medium)", "data": [1.0207, 1.0631, 1.1773, 1.2989, 1.3961, 1.5087, 1.9687, 2.1037, 2.6733, 4.463], "backgroundColor": "rgba(28a745", "borderColor": "#28a745", "borderWidth": 2, "borderRadius": 6}, {"label": "P95 \u5ef6\u8fdf (long)", "data": [1.0308, 1.0845, 1.2013, 1.2993, 1.403, 1.6596, 1.7049, 2.2048, 2.9751, 4.1355], "backgroundColor": "rgba(ff6b6b", "borderColor": "#ff6b6b", "borderWidth": 2, "borderRadius": 6}]}, "options": {"responsive": true, "maintainAspectRatio": false, "plugins": {"legend": {"display": true}, "tooltip": {"backgroundColor": "rgba(0,0,0,0.8)", "padding": 12, "titleFont": {"size": 14}, "bodyFont": {"size": 13}}}, "scales": {"x": {"title": {"display": true, "text": "\u5e76\u53d1\u6570", "font": {"size": 14, "weight": "bold"}}, "grid": {"display": false}}, "y": {"title": {"display": true, "text": "P95 \u5ef6\u8fdf (\u6beb\u79d2)", "font": {"size": 14, "weight": "bold"}}, "beginAtZero": true}}}});
+            
+                // TTFT 图表
+                new Chart(document.getElementById('ttftChart'), {"type": "bar", "data": {"labels": [1, 2, 4, 8, 16, 32, 64, 96, 128, 256], "datasets": [{"label": "TTFT (short)", "data": [0.82, 0.8598, 0.9378, 1.0326, 1.1215, 1.2473, 1.4231, 1.6788, 1.9215, 3.2032], "backgroundColor": "rgba(667eea", "borderColor": "#667eea", "borderWidth": 2, "borderRadius": 6}, {"label": "TTFT (medium)", "data": [0.8282, 0.8781, 0.9476, 1.042, 1.1333, 1.2321, 1.4562, 1.6553, 1.9202, 3.1555], "backgroundColor": "rgba(28a745", "borderColor": "#28a745", "borderWidth": 2, "borderRadius": 6}, {"label": "TTFT (long)", "data": [0.8306, 0.8787, 0.9581, 1.0391, 1.1434, 1.2512, 1.4288, 1.7364, 1.956, 3.0695], "backgroundColor": "rgba(ff6b6b", "borderColor": "#ff6b6b", "borderWidth": 2, "borderRadius": 6}]}, "options": {"responsive": true, "maintainAspectRatio": false, "plugins": {"legend": {"display": true}, "tooltip": {"backgroundColor": "rgba(0,0,0,0.8)", "padding": 12, "titleFont": {"size": 14}, "bodyFont": {"size": 13}}}, "scales": {"x": {"title": {"display": true, "text": "\u5e76\u53d1\u6570", "font": {"size": 14, "weight": "bold"}}, "grid": {"display": false}}, "y": {"title": {"display": true, "text": "TTFT (\u6beb\u79d2)", "font": {"size": 14, "weight": "bold"}}, "beginAtZero": true}}}});
+            
+                // 成功率图表
+                new Chart(document.getElementById('successChart'), {"type": "bar", "data": {"labels": [1, 2, 4, 8, 16, 32, 64, 96, 128, 256], "datasets": [{"label": "\u6210\u529f\u7387 (short)", "data": [100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0], "backgroundColor": "rgba(667eea", "borderColor": "#667eea", "borderWidth": 2, "borderRadius": 6}, {"label": "\u9519\u8bef\u7387 (short)", "data": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "backgroundColor": "rgba(dc3545", "borderColor": "#dc3545", "borderWidth": 2, "borderRadius": 6}, {"label": "\u6210\u529f\u7387 (medium)", "data": [100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0], "backgroundColor": "rgba(28a745", "borderColor": "#28a745", "borderWidth": 2, "borderRadius": 6}, {"label": "\u9519\u8bef\u7387 (medium)", "data": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "backgroundColor": "rgba(ffc107", "borderColor": "#ffc107", "borderWidth": 2, "borderRadius": 6}, {"label": "\u6210\u529f\u7387 (long)", "data": [100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0], "backgroundColor": "rgba(ff6b6b", "borderColor": "#ff6b6b", "borderWidth": 2, "borderRadius": 6}, {"label": "\u9519\u8bef\u7387 (long)", "data": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "backgroundColor": "rgba(dc3545", "borderColor": "#dc3545", "borderWidth": 2, "borderRadius": 6}]}, "options": {"responsive": true, "maintainAspectRatio": false, "plugins": {"legend": {"display": true}, "tooltip": {"backgroundColor": "rgba(0,0,0,0.8)", "padding": 12, "titleFont": {"size": 14}, "bodyFont": {"size": 13}}}, "scales": {"x": {"title": {"display": true, "text": "\u5e76\u53d1\u6570", "font": {"size": 14, "weight": "bold"}}, "grid": {"display": false}}, "y": {"title": {"display": true, "text": "\u767e\u5206\u6bd4 (%)", "font": {"size": 14, "weight": "bold"}}, "beginAtZero": true, "max": 100}}}});
+            
+            </script>
+        </body>
+        </html>
+        

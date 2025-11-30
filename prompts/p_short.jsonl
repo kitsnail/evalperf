@@ -98,3 +98,192 @@
 {"messages": [{"role": "user", "content": "Explain backup strategies."}]}
 {"messages": [{"role": "user", "content": "How to business continuity?"}]}
 {"messages": [{"role": "user", "content": "What is incident response?"}]}
+{"messages": [{"role": "user", "content": "How to handle production incidents?"}]}
+{"messages": [{"role": "user", "content": "What is site reliability engineering?"}]}
+{"messages": [{"role": "user", "content": "Explain chaos engineering."}]}
+{"messages": [{"role": "user", "content": "How to capacity planning?"}]}
+{"messages": [{"role": "user", "content": "What is load balancing?"}]}
+{"messages": [{"role": "user", "content": "How to database optimization?"}]}
+{"messages": [{"role": "user", "content": "What is caching strategy?"}]}
+{"messages": [{"role": "user", "content": "Explain CDN implementation."}]}
+{"messages": [{"role": "user", "content": "How to reduce latency?"}]}
+{"messages": [{"role": "user", "content": "What is message queue?"}]}
+{"messages": [{"role": "user", "content": "How to implement Redis?"}]}
+{"messages": [{"role": "user", "content": "What is RabbitMQ?"}]}
+{"messages": [{"role": "user", "content": "Explain Apache Kafka."}]}
+{"messages": [{"role": "user", "content": "How to event-driven architecture?"}]}
+{"messages": [{"role": "user", "content": "What is serverless computing?"}]}
+{"messages": [{"role": "user", "content": "How to AWS Lambda?"}]}
+{"messages": [{"role": "user", "content": "What is GraphQL?"}]}
+{"messages": [{"role": "user", "content": "Explain API gateway."}]}
+{"messages": [{"role": "user", "content": "How to rate limiting?"}]}
+{"messages": [{"role": "user", "content": "What is OAuth authentication?"}]}
+{"messages": [{"role": "user", "content": "How to JWT implementation?"}]}
+{"messages": [{"role": "user", "content": "What is session management?"}]}
+{"messages": [{"role": "user", "content": "Explain cookie handling."}]}
+{"messages": [{"role": "user", "content": "How to CORS configuration?"}]}
+{"messages": [{"role": "user", "content": "What is XSS attack?"}]}
+{"messages": [{"role": "user", "content": "How to prevent SQL injection?"}]}
+{"messages": [{"role": "user", "content": "What is CSRF protection?"}]}
+{"messages": [{"role": "user", "content": "Explain security headers."}]}
+{"messages": [{"role": "user", "content": "How to HTTPS implementation?"}]}
+{"messages": [{"role": "user", "content": "What is SSL certificate?"}]}
+{"messages": [{"role": "user", "content": "How to domain configuration?"}]}
+{"messages": [{"role": "user", "content": "What is DNS management?"}]}
+{"messages": [{"role": "user", "content": "Explain web hosting."}]}
+{"messages": [{"role": "user", "content": "How to deploy static sites?"}]}
+{"messages": [{"role": "user", "content": "What is Netlify?"}]}
+{"messages": [{"role": "user", "content": "How to use Vercel?"}]}
+{"messages": [{"role": "user", "content": "What is GitHub Pages?"}]}
+{"messages": [{"role": "user", "content": "Explain CI/CD pipeline."}]}
+{"messages": [{"role": "user", "content": "How to GitHub Actions?"}]}
+{"messages": [{"role": "user", "content": "What is Jenkins?"}]}
+{"messages": [{"role": "user", "content": "How to GitLab CI?"}]}
+{"messages": [{"role": "user", "content": "What is build automation?"}]}
+{"messages": [{"role": "user", "content": "Explain deployment strategies."}]}
+{"messages": [{"role": "user", "content": "How to blue-green deployment?"}]}
+{"messages": [{"role": "user", "content": "What is canary release?"}]}
+{"messages": [{"role": "user", "content": "How to rollback deployment?"}]}
+{"messages": [{"role": "user", "content": "What is feature flag?"}]}
+{"messages": [{"role": "user", "content": "Explain A/B testing."}]}
+{"messages": [{"role": "user", "content": "How to analytics integration?"}]}
+{"messages": [{"role": "user", "content": "What is Google Analytics?"}]}
+{"messages": [{"role": "user", "content": "How to track user behavior?"}]}
+{"messages": [{"role": "user", "content": "What is conversion optimization?"}]}
+{"messages": [{"role": "user", "content": "Explain SEO basics."}]}
+{"messages": [{"role": "user", "content": "How to improve page speed?"}]}
+{"messages": [{"role": "user", "content": "What is Core Web Vitals?"}]}
+{"messages": [{"role": "user", "content": "How to accessibility standards?"}]}
+{"messages": [{"role": "user", "content": "What is WCAG compliance?"}]}
+{"messages": [{"role": "user", "content": "Explain screen reader support."}]}
+{"messages": [{"role": "user", "content": "How to semantic HTML?"}]}
+{"messages": [{"role": "user", "content": "What is progressive web app?"}]}
+{"messages": [{"role": "user", "content": "How to service worker?"}]}
+{"messages": [{"role": "user", "content": "What is offline functionality?"}]}
+{"messages": [{"role": "user", "content": "Explain web workers."}]}
+{"messages": [{"role": "user", "content": "How to WebSocket implementation?"}]}
+{"messages": [{"role": "user", "content": "What is real-time communication?"}]}
+{"messages": [{"role": "user", "content": "How to build chat application?"}]}
+{"messages": [{"role": "user", "content": "What is Socket.io?"}]}
+{"messages": [{"role": "user", "content": "Explain WebRTC technology."}]}
+{"messages": [{"role": "user", "content": "How to video streaming?"}]}
+{"messages": [{"role": "user", "content": "What is media encoding?"}]}
+{"messages": [{"role": "user", "content": "How to image optimization?"}]}
+{"messages": [{"role": "user", "content": "What is lazy loading?"}]}
+{"messages": [{"role": "user", "content": "Explain code splitting."}]}
+{"messages": [{"role": "user", "content": "How to webpack configuration?"}]}
+{"messages": [{"role": "user", "content": "What is Vite?"}]}
+{"messages": [{"role": "user", "content": "How to module bundling?"}]}
+{"messages": [{"role": "user", "content": "What is tree shaking?"}]}
+{"messages": [{"role": "user", "content": "Explain minification process."}]}
+{"messages": [{"role": "user", "content": "How to code obfuscation?"}]}
+{"messages": [{"role": "user", "content": "What is source maps?"}]}
+{"messages": [{"role": "user", "content": "How to debugging production?"}]}
+{"messages": [{"role": "user", "content": "What is error tracking?"}]}
+{"messages": [{"role": "user", "content": "Explain Sentry integration."}]}
+{"messages": [{"role": "user", "content": "How to log aggregation?"}]}
+{"messages": [{"role": "user", "content": "What is ELK stack?"}]}
+{"messages": [{"role": "user", "content": "How to Elasticsearch setup?"}]}
+{"messages": [{"role": "user", "content": "What is Logstash?"}]}
+{"messages": [{"role": "user", "content": "Explain Kibana dashboards."}]}
+{"messages": [{"role": "user", "content": "How to metrics collection?"}]}
+{"messages": [{"role": "user", "content": "What is Prometheus?"}]}
+{"messages": [{"role": "user", "content": "How to Grafana setup?"}]}
+{"messages": [{"role": "user", "content": "What is time series database?"}]}
+{"messages": [{"role": "user", "content": "Explain monitoring alerts."}]}
+{"messages": [{"role": "user", "content": "How to on-call rotation?"}]}
+{"messages": [{"role": "user", "content": "What is incident management?"}]}
+{"messages": [{"role": "user", "content": "How to postmortem analysis?"}]}
+{"messages": [{"role": "user", "content": "What is root cause analysis?"}]}
+{"messages": [{"role": "user", "content": "Explain blameless culture."}]}
+{"messages": [{"role": "user", "content": "How to team collaboration?"}]}
+{"messages": [{"role": "user", "content": "What is pair programming?"}]}
+{"messages": [{"role": "user", "content": "How to code review best practices?"}]}
+{"messages": [{"role": "user", "content": "What is pull request workflow?"}]}
+{"messages": [{"role": "user", "content": "Explain branching strategy."}]}
+{"messages": [{"role": "user", "content": "How to Git workflow?"}]}
+{"messages": [{"role": "user", "content": "What is trunk-based development?"}]}
+{"messages": [{"role": "user", "content": "How to merge conflicts?"}]}
+{"messages": [{"role": "user", "content": "What is rebase vs merge?"}]}
+{"messages": [{"role": "user", "content": "Explain Git hooks."}]}
+{"messages": [{"role": "user", "content": "How to commit message conventions?"}]}
+{"messages": [{"role": "user", "content": "What is semantic versioning?"}]}
+{"messages": [{"role": "user", "content": "How to release management?"}]}
+{"messages": [{"role": "user", "content": "What is changelog generation?"}]}
+{"messages": [{"role": "user", "content": "Explain dependency management."}]}
+{"messages": [{"role": "user", "content": "How to package management?"}]}
+{"messages": [{"role": "user", "content": "What is npm registry?"}]}
+{"messages": [{"role": "user", "content": "How to publish npm package?"}]}
+{"messages": [{"role": "user", "content": "What is yarn vs npm?"}]}
+{"messages": [{"role": "user", "content": "Explain pnpm benefits."}]}
+{"messages": [{"role": "user", "content": "How to monorepo setup?"}]}
+{"messages": [{"role": "user", "content": "What is Lerna?"}]}
+{"messages": [{"role": "user", "content": "How to workspace management?"}]}
+{"messages": [{"role": "user", "content": "What is Nx framework?"}]}
+{"messages": [{"role": "user", "content": "Explain Turborepo."}]}
+{"messages": [{"role": "user", "content": "How to build optimization?"}]}
+{"messages": [{"role": "user", "content": "What is incremental builds?"}]}
+{"messages": [{"role": "user", "content": "How to caching strategies?"}]}
+{"messages": [{"role": "user", "content": "What is distributed caching?"}]}
+{"messages": [{"role": "user", "content": "Explain build parallelization."}]}
+{"messages": [{"role": "user", "content": "How to reduce build time?"}]}
+{"messages": [{"role": "user", "content": "What is hot module replacement?"}]}
+{"messages": [{"role": "user", "content": "How to development environment?"}]}
+{"messages": [{"role": "user", "content": "What is Docker Compose?"}]}
+{"messages": [{"role": "user", "content": "Explain local development setup."}]}
+{"messages": [{"role": "user", "content": "How to environment variables?"}]}
+{"messages": [{"role": "user", "content": "What is dotenv configuration?"}]}
+{"messages": [{"role": "user", "content": "How to secrets management?"}]}
+{"messages": [{"role": "user", "content": "What is HashiCorp Vault?"}]}
+{"messages": [{"role": "user", "content": "Explain AWS Secrets Manager."}]}
+{"messages": [{"role": "user", "content": "How to credential rotation?"}]}
+{"messages": [{"role": "user", "content": "What is zero trust security?"}]}
+{"messages": [{"role": "user", "content": "How to identity management?"}]}
+{"messages": [{"role": "user", "content": "What is single sign-on?"}]}
+{"messages": [{"role": "user", "content": "Explain SAML authentication."}]}
+{"messages": [{"role": "user", "content": "How to multi-factor authentication?"}]}
+{"messages": [{"role": "user", "content": "What is biometric security?"}]}
+{"messages": [{"role": "user", "content": "How to password policies?"}]}
+{"messages": [{"role": "user", "content": "What is password hashing?"}]}
+{"messages": [{"role": "user", "content": "Explain bcrypt algorithm."}]}
+{"messages": [{"role": "user", "content": "How to salt generation?"}]}
+{"messages": [{"role": "user", "content": "What is rainbow table attack?"}]}
+{"messages": [{"role": "user", "content": "How to prevent brute force?"}]}
+{"messages": [{"role": "user", "content": "What is rate limiting strategy?"}]}
+{"messages": [{"role": "user", "content": "Explain DDoS protection."}]}
+{"messages": [{"role": "user", "content": "How to WAF configuration?"}]}
+{"messages": [{"role": "user", "content": "What is Cloudflare?"}]}
+{"messages": [{"role": "user", "content": "How to bot detection?"}]}
+{"messages": [{"role": "user", "content": "What is CAPTCHA implementation?"}]}
+{"messages": [{"role": "user", "content": "Explain reCAPTCHA v3."}]}
+{"messages": [{"role": "user", "content": "How to fraud prevention?"}]}
+{"messages": [{"role": "user", "content": "What is anomaly detection?"}]}
+{"messages": [{"role": "user", "content": "How to machine learning models?"}]}
+{"messages": [{"role": "user", "content": "What is supervised learning?"}]}
+{"messages": [{"role": "user", "content": "Explain unsupervised learning."}]}
+{"messages": [{"role": "user", "content": "How to reinforcement learning?"}]}
+{"messages": [{"role": "user", "content": "What is transfer learning?"}]}
+{"messages": [{"role": "user", "content": "How to model training?"}]}
+{"messages": [{"role": "user", "content": "What is hyperparameter tuning?"}]}
+{"messages": [{"role": "user", "content": "Explain cross-validation."}]}
+{"messages": [{"role": "user", "content": "How to overfitting prevention?"}]}
+{"messages": [{"role": "user", "content": "What is regularization?"}]}
+{"messages": [{"role": "user", "content": "How to feature engineering?"}]}
+{"messages": [{"role": "user", "content": "What is data preprocessing?"}]}
+{"messages": [{"role": "user", "content": "Explain data normalization."}]}
+{"messages": [{"role": "user", "content": "How to handle missing data?"}]}
+{"messages": [{"role": "user", "content": "What is data augmentation?"}]}
+{"messages": [{"role": "user", "content": "How to imbalanced datasets?"}]}
+{"messages": [{"role": "user", "content": "What is SMOTE technique?"}]}
+{"messages": [{"role": "user", "content": "Explain confusion matrix."}]}
+{"messages": [{"role": "user", "content": "How to model evaluation?"}]}
+{"messages": [{"role": "user", "content": "What is precision vs recall?"}]}
+{"messages": [{"role": "user", "content": "How to F1 score calculation?"}]}
+{"messages": [{"role": "user", "content": "What is ROC curve?"}]}
+{"messages": [{"role": "user", "content": "Explain AUC metric."}]}
+{"messages": [{"role": "user", "content": "How to model deployment?"}]}
+{"messages": [{"role": "user", "content": "What is MLOps?"}]}
+{"messages": [{"role": "user", "content": "How to model versioning?"}]}
+{"messages": [{"role": "user", "content": "What is model monitoring?"}]}
+{"messages": [{"role": "user", "content": "Explain model drift detection."}]}
+{"messages": [{"role": "user", "content": "How to A/B testing models?"}]}
